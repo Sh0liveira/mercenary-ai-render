@@ -9,8 +9,9 @@ import json
 from pathlib import Path
 from typing import Union, Dict, Any
 from PIL import Image
-import google.generativeai as genai
 from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -40,15 +41,17 @@ Você DEVE responder ESTRITAMENTE em formato JSON válido, contendo EXATAMENTE e
 def analyze_carpentry_image(
     image_input: Union[str, Path, Image.Image],
     additional_instructions: str = "",
-    api_key: str = None
+    api_key: str = None,
+    model_name: str = "gemini-3.1-flash-lite"
 ) -> Dict[str, Any]:
     """
-    Analisa uma imagem de projeto de marcenaria usando o Google Gemini 1.5 Pro.
+    Analisa uma imagem de projeto de marcenaria usando o Google Gemini oficial (google-genai).
 
     Args:
         image_input: Caminho da imagem (str/Path) ou objeto PIL.Image.Image.
         additional_instructions: Instruções ou preferências adicionais do usuário.
         api_key: Chave da API Gemini (opcional, busca em GEMINI_API_KEY se omitido).
+        model_name: Nome do modelo Gemini (padrão: gemini-3.1-flash-lite).
 
     Returns:
         Dict com as chaves 'input_type', 'extracted_notes' e 'sd_prompt'.
@@ -75,32 +78,27 @@ def analyze_carpentry_image(
     else:
         raise ValueError("O parâmetro image_input deve ser um caminho de arquivo ou uma instância de PIL.Image.")
 
-    # 3. Configuração do Gemini
-    genai.configure(api_key=gemini_key)
+    # 3. Inicialização do Cliente oficial google-genai
+    client = genai.Client(api_key=gemini_key)
 
-    generation_config = genai.GenerationConfig(
+    config = types.GenerateContentConfig(
+        system_instruction=SYSTEM_INSTRUCTION,
         response_mime_type="application/json",
         temperature=0.2
     )
 
-    model = genai.GenerativeModel(
-        model_name="gemini-1.5-pro",
-        system_instruction=SYSTEM_INSTRUCTION,
-        generation_config=generation_config
-    )
-
-    # 4. Construção do prompt do usuário
-    user_prompt = [
-        "Analise esta imagem de projeto de marcenaria e extraia todas as informações no formato JSON especificado.",
-        image
-    ]
-
+    # 4. Construção dos conteúdos da requisição
+    prompt_text = "Analise esta imagem de projeto de marcenaria e extraia todas as informações no formato JSON especificado."
     if additional_instructions.strip():
-        user_prompt.append(f"\nInstruções adicionais do marceneiro/designer: {additional_instructions.strip()}")
+        prompt_text += f"\nInstruções adicionais do marceneiro/designer: {additional_instructions.strip()}"
 
     # 5. Execução da inferência bimodal
     try:
-        response = model.generate_content(user_prompt)
+        response = client.models.generate_content(
+            model=model_name,
+            contents=[image, prompt_text],
+            config=config
+        )
     except Exception as e:
         raise RuntimeError(f"Erro na comunicação com a API do Gemini: {e}") from e
 
