@@ -8,7 +8,7 @@ import io
 import os
 import tempfile
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from unittest.mock import MagicMock, patch
 
 import streamlit as st
@@ -171,6 +171,35 @@ def _mock_requests_get(url: str, **kwargs) -> MagicMock:
     return mock_resp
 
 
+def _execute_render(
+    image_path: Path,
+    sd_prompt: str,
+    negative_prompt: str,
+    spec: FurnitureSpec,
+    leonardo_key: str,
+    use_mock: bool,
+) -> Path:
+    """Executa o render_carpentry_design com ou sem mock HTTP."""
+    render_kwargs = {
+        "image_path": image_path,
+        "sd_prompt": sd_prompt,
+        "negative_prompt": negative_prompt,
+        "spec_data": spec,
+        "input_type": spec.input_type,
+        "strength_type": "High",
+        "api_key": leonardo_key,
+        "outputs_base_dir": "outputs",
+    }
+    if use_mock:
+        with (
+            patch("render_module.requests.request", side_effect=_mock_requests_request),
+            patch("render_module.requests.post", side_effect=_mock_requests_post),
+            patch("render_module.requests.get", side_effect=_mock_requests_get),
+        ):
+            return render_carpentry_design(**render_kwargs)
+    return render_carpentry_design(**render_kwargs)
+
+
 # ============================================================================
 # Cabeçalho Principal
 # ============================================================================
@@ -252,52 +281,98 @@ if generate_clicked:
                     additional_instructions=additional_notes,
                 )
 
-                # Carregamento de Estilo e Geração de Prompts
+                # Carregamento de Estilo e Geração Inicial de Prompts
                 style_dict: Dict[str, Any] = load_style(spec.furniture_type, variant=selected_style)
                 sd_prompt = build_prompt(spec, style_dict)
                 negative_prompt = build_negative_prompt(spec, style_dict)
-
-                # Passo 2: Renderização (Leonardo.ai ou Mock)
-                st.write("🎨 **Passo 2/3:** Renderizando projeto com ControlNet SDXL...")
                 leonardo_key = os.getenv("LEONARDO_API_KEY") or "mock-leonardo-api-key"
 
-                if use_mock_render:
-                    with (
-                        patch("render_module.requests.request", side_effect=_mock_requests_request),
-                        patch("render_module.requests.post", side_effect=_mock_requests_post),
-                        patch("render_module.requests.get", side_effect=_mock_requests_get),
-                    ):
-                        rendered_path = render_carpentry_design(
-                            image_path=temp_image_path,
-                            sd_prompt=sd_prompt,
-                            negative_prompt=negative_prompt,
-                            spec_data=spec,
-                            input_type=spec.input_type,
-                            strength_type="High",
-                            api_key=leonardo_key,
-                            outputs_base_dir="outputs",
-                        )
-                else:
-                    rendered_path = render_carpentry_design(
+                # Loop de Retentativa Inteligente (Agente de Auto-Reflexão)
+                max_attempts = 3
+                attempt = 1
+                rendered_path: Optional[Path] = None
+                evaluation: Optional[JudgeEvaluation] = None
+                attempt_history: List[Dict[str, Any]] = []
+
+                while attempt <= max_attempts:
+                    status_box.update(
+                        label=f"Executando pipeline WoodAI Studio — Tentativa {attempt}/{max_attempts}...",
+                        state="running",
+                    )
+
+                    # Passo 2: Renderização (Leonardo.ai ou Mock)
+                    st.write(
+                        f"🎨 **Passo 2/3 (Tentativa {attempt}/{max_attempts}):** "
+                        "Renderizando projeto com ControlNet SDXL..."
+                    )
+                    rendered_path = _execute_render(
                         image_path=temp_image_path,
                         sd_prompt=sd_prompt,
                         negative_prompt=negative_prompt,
-                        spec_data=spec,
-                        input_type=spec.input_type,
-                        strength_type="High",
-                        api_key=leonardo_key,
-                        outputs_base_dir="outputs",
+                        spec=spec,
+                        leonardo_key=leonardo_key,
+                        use_mock=use_mock_render,
                     )
 
-                # Passo 3: Juiz QA (Gemini)
-                st.write("⚖️ **Passo 3/3:** Auditando fidelidade estrutural com o Juiz Gemini...")
-                evaluation: JudgeEvaluation = evaluate_render(
-                    generated_image_path=rendered_path,
-                    spec_data=spec.model_dump(),
-                    style_data=style_dict,
-                )
+                    # Passo 3: Juiz QA (Gemini)
+                    st.write(
+                        f"⚖️ **Passo 3/3 (Tentativa {attempt}/{max_attempts}):** "
+                        "Auditando fidelidade estrutural com o Juiz Gemini..."
+                    )
+                    evaluation = evaluate_render(
+                        generated_image_path=rendered_path,
+                        spec_data=spec.model_dump(),
+                        style_data=style_dict,
+                    )
 
-                status_box.update(label="Pipeline concluído com sucesso!", state="complete", expanded=False)
+                    attempt_history.append({
+                        "attempt": attempt,
+                        "is_approved": evaluation.is_approved,
+                        "adherence_score": evaluation.adherence_score,
+                        "sd_prompt": sd_prompt,
+                        "negative_prompt": negative_prompt,
+                        "missing_elements": evaluation.missing_elements,
+                        "hallucinations": evaluation.hallucinations,
+                    })
+
+                    if evaluation.is_approved:
+                        break
+
+                    # Retroalimentação de prompts caso haja próxima tentativa
+                    if attempt < max_attempts:
+                        st.warning(
+                            f"⚠️ Tentativa {attempt}/{max_attempts}: Reprovado pelo QA. "
+                            "Ajustando prompts e tentando novamente..."
+                        )
+                        if evaluation.missing_elements:
+                            missing_items = ", ".join(evaluation.missing_elements)
+                            sd_prompt = f"{sd_prompt}, MUST INCLUDE: {missing_items}"
+                        if evaluation.hallucinations:
+                            hallucination_items = ", ".join(evaluation.hallucinations)
+                            negative_prompt = f"{negative_prompt}, AVOID: {hallucination_items}"
+
+                    attempt += 1
+
+                if evaluation and evaluation.is_approved:
+                    status_box.update(
+                        label=f"Pipeline concluído e aprovado na Tentativa {attempt}/{max_attempts}!",
+                        state="complete",
+                        expanded=False,
+                    )
+                else:
+                    status_box.update(
+                        label=f"Pipeline finalizado após {max_attempts} tentativas (reprovado pelo QA).",
+                        state="error",
+                        expanded=False,
+                    )
+
+            assert rendered_path is not None and evaluation is not None
+
+            if not evaluation.is_approved:
+                st.error(
+                    f"❌ O projeto não foi aprovado pelo Juiz QA após {max_attempts} tentativas "
+                    f"(Score final: {evaluation.adherence_score}/100). Veja os detalhes da última auditoria abaixo."
+                )
 
             # ----------------------------------------------------------------
             # Exibição de Especificações Extraídas
@@ -313,12 +388,14 @@ if generate_clicked:
             m3.metric("Portas / Gavetas", f"{spec.structure.doors_count}P / {spec.structure.drawers_count}G")
             m4.metric("Confiança OCR", f"{int(dims.confidence * 100)}%")
 
-            with st.expander("Ver JSON completo extraído (FurnitureSpec) e Prompts gerados"):
+            with st.expander("Ver JSON completo extraído (FurnitureSpec), Prompts e Histórico de Tentativas"):
                 st.json(spec.model_dump())
-                st.markdown("**`sd_prompt`:**")
+                st.markdown("**`sd_prompt` final:**")
                 st.code(sd_prompt, language="text")
-                st.markdown("**`negative_prompt`:**")
+                st.markdown("**`negative_prompt` final:**")
                 st.code(negative_prompt, language="text")
+                st.markdown("**Histórico de Auto-Reflexão (Tentativas):**")
+                st.json(attempt_history)
 
             st.divider()
 
