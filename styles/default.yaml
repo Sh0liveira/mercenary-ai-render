@@ -1,0 +1,26 @@
+furniture_type: default
+
+variants:
+  modern_minimal:
+    camera: "straight-on eye-level architectural shot, perfectly centered composition, 35mm lens, clean geometric perspective"
+    environment: "contemporary minimalist interior, smooth matte plaster walls, light microcement flooring, subtle architectural decor"
+    lighting: "soft diffused natural daylight from large side window, balanced studio fill light, subtle soft contact shadows"
+    quality_tags: "photorealistic, 8k resolution, architectural digest photography, hyper-detailed wood grain and lacquer textures, sharp focus, ray tracing"
+    negative:
+      - "cluttered background"
+      - "harsh artificial shadows"
+      - "oversaturated colors"
+      - "fisheye distortion"
+      - "ornate carvings"
+
+  classic_warm:
+    camera: "eye-level three-quarter architectural perspective, balanced framing, 50mm lens, natural depth of field"
+    environment: "warm sophisticated residential interior, off-white wainscoted walls, natural herringbone oak parquet flooring, tasteful neutral accents"
+    lighting: "warm golden hour natural sunlight, soft ambient interior glow, rich realistic shadows"
+    quality_tags: "photorealistic, 8k resolution, luxury interior design catalog photography, tactile material realism, crisp edges, global illumination"
+    negative:
+      - "cold clinical lighting"
+      - "neon colors"
+      - "industrial concrete background"
+      - "low resolution"
+      - "plastic textures"

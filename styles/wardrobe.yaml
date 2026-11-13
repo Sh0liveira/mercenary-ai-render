@@ -1,0 +1,26 @@
+furniture_type: wardrobe
+
+variants:
+  modern_minimal:
+    camera: "straight-on eye-level architectural bedroom shot, full height framing, 28mm wide-angle rectilinear lens, zero vertical distortion"
+    environment: "modern minimalist master bedroom or walk-in closet, seamless light gray walls, pale engineered wood floor, clean Scandinavian aesthetic"
+    lighting: "soft indirect recessed ceiling LED wash, diffused natural window daylight, gentle ambient shadows"
+    quality_tags: "photorealistic, 8k resolution, luxury bespoke closet photography, realistic wood veneer and matte finish, crisp panel reveals, ray tracing"
+    negative:
+      - "messy clothes"
+      - "cluttered floor"
+      - "open messy drawers"
+      - "harsh flash glare"
+      - "bent vertical lines"
+
+  classic_warm:
+    camera: "eye-level architectural interior shot, slightly angled framing to show depth, 35mm lens, crisp geometric alignment"
+    environment: "warm luxury master suite dressing room, cream textured linen wallpaper, warm walnut herringbone floor, subtle brass accents"
+    lighting: "warm 3000K architectural accent lighting, soft morning sunlight through sheer curtains, inviting warm shadows"
+    quality_tags: "photorealistic, 8k resolution, high-end interior architecture magazine style, rich natural timber texture, refined joinery details, global illumination"
+    negative:
+      - "stark white hospital lighting"
+      - "cheap laminate sheen"
+      - "clutter"
+      - "distorted proportions"
+      - "extra hardware"
