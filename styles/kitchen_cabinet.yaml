@@ -1,0 +1,26 @@
+furniture_type: kitchen_cabinet
+
+variants:
+  modern_minimal:
+    camera: "eye-level frontal architectural kitchen shot, perfectly level horizon, 28mm rectilinear lens, crisp vertical lines"
+    environment: "contemporary minimalist gourmet kitchen, honed quartz countertop and backsplash, matte porcelain floor tiles, clean uncluttered counter"
+    lighting: "bright natural daylight balanced with subtle under-cabinet warm LED strip illumination, clean reflections"
+    quality_tags: "photorealistic, 8k resolution, modern architectural kitchen catalog photography, authentic matte lacquer and stone veining, sharp focus, ray tracing"
+    negative:
+      - "dirty dishes"
+      - "cooking clutter"
+      - "food mess"
+      - "harsh fluorescent glare"
+      - "warped cabinet doors"
+
+  classic_warm:
+    camera: "eye-level architectural interior shot, gentle 35mm framing, natural spatial perspective"
+    environment: "warm timeless chef kitchen, natural marble countertop with subtle veining, warm terracotta or limestone flooring, understated ceramic decor"
+    lighting: "warm golden sunlight streaming across cabinetry, soft ambient room fill, cozy refined shadows"
+    quality_tags: "photorealistic, 8k resolution, luxury culinary interior photography, rich wood grain and brushed hardware realism, crisp joinery, global illumination"
+    negative:
+      - "cluttered countertops"
+      - "cold blue light"
+      - "plastic glossy finish"
+      - "fish-eye lens"
+      - "unrealistic appliances"
