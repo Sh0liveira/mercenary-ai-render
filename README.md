@@ -1,62 +1,54 @@
-<div align="center">
-  <h1>🪵 WoodAI Studio <em>(V2)</em></h1>
-  <p><strong>Transformando plantas técnicas de marcenaria em renderizações fotorealistas com IA Autônoma.</strong></p>
+## 📖 About the Project
 
-  <!-- Badges -->
-  <img src="https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Streamlit" />
-  <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white" alt="OpenCV" />
-  <img src="https://img.shields.io/badge/Gemini_AI-8E75B2?style=for-the-badge&logo=googlebard&logoColor=white" alt="Gemini" />
-  <img src="https://img.shields.io/badge/Leonardo.ai-SDXL-orange?style=for-the-badge" alt="Leonardo.ai" />
-</div>
+**WoodAI Studio** is an automated system for the woodworking and interior design sector. The main challenge of this project was to solve the **"ControlNet Bottleneck"**: image diffusion models fail when interpreting 2D technical floor plans because they read dimension lines (e.g., "156cm") and text as if they were 3D geometry, generating hallucinations (like floating drawers or text carved into the wood).
 
-<br>
+To solve this, we developed an **Autonomous Agent** that orchestrates a hybrid pipeline: **Classic Computer Vision (OpenCV)** for image cleaning, **Multimodal LLMs (Google Gemini)** for semantic extraction, and **Diffusion Models (Leonardo Kino XL + ControlNet)** for photorealistic rendering.
 
-## 📖 Sobre o Projeto
+## ✨ Main Features
 
-O **WoodAI Studio** é um sistema automatizado para o setor de marcenaria e design de interiores. O desafio principal deste projeto foi resolver o **"Gargalo do ControlNet"**: motores de difusão de imagem falham ao interpretar plantas técnicas 2D porque leem linhas de cota (ex: "156cm") e textos como se fossem geometria 3D, gerando alucinações (como gavetas flutuantes ou textos esculpidos na madeira).
+* 🤖 **Autonomous AI Pipeline:** A smart loop that evaluates its own generated images.
 
-Para resolver isso, desenvolvemos um **Agente Autônomo** que orquestra um pipeline híbrido de **Visão Computacional clássica (OpenCV)** para limpeza de imagem, **LLMs Multimodais (Google Gemini)** para extração semântica, e **Modelos de Difusão (Leonardo Kino XL + ControlNet)** para a renderização fotorrealista.
+* 👁️ **Deterministic Image Cleaning:** Uses OpenCV to erase dimensions and texts before generation, preventing ControlNet "hallucinations."
 
----
+* 📐 **Semantic-Geometric Translation:** LLMs convert exact measurements (e.g., `156x80cm`) into descriptive proportions in English (e.g., `wide horizontal proportion`), shielding the 3D engine's prompt.
 
-## ✨ Principais Funcionalidades
+* ⚖️ **QA Judge (Quality Assurance):** A rigorous Vision model that rejects the image if it doesn't reach a target photorealism score or if it detects residual text on the wood.
 
-- 🤖 **Pipeline de IA Autônomo:** Um loop inteligente que avalia a própria imagem gerada.
-- 👁️ **Limpeza de Imagem Determinística:** Uso de OpenCV para apagar cotas e textos antes da geração, evitando "alucinações" do ControlNet.
-- 📐 **Tradução Semântico-Geométrica:** LLMs convertem medidas exatas (ex: `156x80cm`) em descrições de proporção em inglês (ex: `wide horizontal proportion`), blindando o prompt do motor 3D.
-- ⚖️ **QA Judge (Juiz de Qualidade):** Um modelo Vision rigoroso que reprova a imagem caso não atinja um *score* de fotorrealismo ou se detectar resíduos de textos na madeira.
-- 📉 **Decaimento Dinâmico de Peso (Weight Decay):** Se o Juiz reprovar o fotorrealismo, o sistema automaticamente reduz a força estrutural do ControlNet (ex: de `0.50` para `0.35`) e tenta novamente sozinho.
+* 📉 **Dynamic Weight Decay:** If the Judge rejects the photorealism, the system automatically reduces the structural strength of the ControlNet (e.g., from `0.50` to `0.35`) and retries on its own.
 
----
+## 🏗️ System Architecture
 
-## 🏗️ Arquitetura do Sistema
+The project adopts a modular architecture based on single responsibilities:
 
-O projeto adota uma arquitetura modularizada, baseada em responsabilidades únicas:
+1. `preprocess_module.py`: Responsible for applying morphological filters and *inpainting* algorithms (OpenCV) to clean scribbles and texts from the original technical drawing.
 
-1. `preprocess_module.py`: Responsável por aplicar filtros morfológicos e algoritmos de *inpainting* (OpenCV) para limpar rabiscos e textos da planta original.
-2. `vision_module.py`: Utiliza Gemini OCR para extrair os dados estruturais e montar prompts otimizados para o motor SDXL.
-3. `render_module.py`: Comunica-se com a API do Leonardo.ai, configurando o ControlNet (Edge) e aplicando o modelo fotográfico Kino XL.
-4. `judge_module.py`: Atua como o Diretor de Arte, avaliando a fidelidade da estrutura gerada e o fotorrealismo.
-5. `app.py`: A interface Streamlit e o coração do Agente Autônomo, orquestrando o loop de tentativas.
+2. `vision_module.py`: Uses Gemini OCR to extract structural data and build optimized prompts for the SDXL engine.
 
----
+3. `render_module.py`: Communicates with the Leonardo.ai API, configuring the ControlNet (Edge) and applying the Kino XL photographic model.
 
-## 🚀 Como Rodar Localmente
+4. `judge_module.py`: Acts as the Art Director, evaluating the fidelity of the generated structure and the photorealism.
 
-### Pré-requisitos
-- Python 3.10 ou superior
-- Chaves de API do [Google Gemini](https://aistudio.google.com/) e [Leonardo.ai](https://leonardo.ai/)
+5. `app.py`: The Streamlit interface and the heart of the Autonomous Agent, orchestrating the retry loop.
 
-### Instalação
+## 🚀 How to Run Locally
 
-1. Clone o repositório:
+### Prerequisites
+
+* Python 3.10 or higher
+
+* API Keys for [Google Gemini](https://aistudio.google.com/) and [Leonardo.ai](https://leonardo.ai/)
+
+### Installation
+
+1. Clone the repository:
+
 ```bash
-git clone https://github.com/seu-usuario/woodai-studio.git
+git clone https://github.com/your-username/woodai-studio.git
 cd woodai-studio
 ```
 
-2. Crie e ative um ambiente virtual:
+2. Create and activate a virtual environment:
+
 ```bash
 python -m venv .venv
 # Windows:
@@ -65,64 +57,62 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-3. Instale as dependências:
+3. Install the dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Configure as Variáveis de Ambiente:
-Crie um arquivo `.env` na raiz do projeto com o seguinte conteúdo:
+4. Configure Environment Variables:
+   Create a `.env` file in the root of the project with the following content:
+
 ```env
-GEMINI_API_KEY=sua_chave_gemini_aqui
-LEONARDO_API_KEY=sua_chave_leonardo_aqui
+GEMINI_API_KEY=your_gemini_key_here
+LEONARDO_API_KEY=your_leonardo_key_here
 ```
 
-5. Inicie a aplicação:
+5. Start the application:
+
 ```bash
 streamlit run app.py
 ```
 
----
+## 💻 Code Example: The Autonomous Loop
 
-## 💻 Exemplo de Código: O Loop Autônomo
-
-Um dos diferenciais deste projeto é o loop de tentativa e decaimento de peso (implementado no `app.py`). Caso a IA gere uma imagem ruim, o sistema se autocorrige:
+One of the highlights of this project is the retry and weight decay loop (implemented in `app.py`). If the AI generates a bad image, the system self-corrects:
 
 ```python
-# Trecho simplificado do fluxo de Agente Autônomo
+# Simplified excerpt of the Autonomous Agent flow
 controlnet_weight = 0.50
 max_attempts = 3
 
 for attempt in range(max_attempts):
-    # 1. Gera a imagem
+    # 1. Generate the image
     render_path = render_carpentry_design(
         clean_img_path, prompt, controlnet_weight
     )
     
-    # 2. O Juiz avalia a qualidade
+    # 2. The Judge evaluates the quality
     evaluation = judge_render(render_path, structural_data)
     
     if evaluation.is_approved:
         display_success(render_path)
         break
     else:
-        # 3. Decaimento de peso e autocorreção do prompt
+        # 3. Weight decay and automatic prompt correction
         controlnet_weight -= 0.15
         prompt = update_prompt_with_judge_feedback(
             prompt, evaluation.prompt_corrections
         )
-        print(f"Tentativa falhou. Reduzindo peso para {controlnet_weight}...")
+        print(f"Attempt failed. Reducing weight to {controlnet_weight}...")
 ```
 
----
+## 🔮 Next Steps (Roadmap)
 
-## 🔮 Próximos Passos (Roadmap)
-- [x] Desacoplamento da geometria de textos (OpenCV).
-- [x] Implementação de Juiz de Qualidade (Vision QA).
-- [ ] Suporte a múltiplas câmeras e ângulos na mesma requisição.
-- [ ] Deploy na nuvem utilizando Docker e Google Cloud Run.
+* [x] Decouple geometry from text (OpenCV).
 
----
-<div align="center">
-  <i>Desenvolvido por <strong>Sergio</strong> — Engenharia de Software & IA Aplicada</i>
-</div>
+* [x] Implement Quality Judge (Vision QA).
+
+* [ ] Support multiple cameras and angles in the same request.
+
+* [ ] Cloud deployment using Docker and Google Cloud Run.
